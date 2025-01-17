@@ -108,12 +108,18 @@ int reverse_buff(char *buff, int len, int str_len){
     if (str_len == 0) {
         return 0;
     }
+    
     char temp;
-    for (int i = 0; i < str_len/2; i++){
+    int i = str_len - 1;
+    int j = 0;
+    while(i > j) {
         temp = *(buff + i);
-        *(buff + i) = *(buff + str_len - 1 - i);
-        *(buff + str_len - i) = temp;
+        *(buff + i) = *(buff + j);
+        *(buff + j) = temp;
+        i--;
+        j++;
     }
+
     return 1;
 }
 
