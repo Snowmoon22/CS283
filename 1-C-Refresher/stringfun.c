@@ -51,6 +51,7 @@ int setup_buff(char *buff, char *user_str, int len){
         *(buff - 1) = '.';
     }
 
+    //fill rest of buffer with '.'
     for (int i = input_length; i < BUFFER_SZ; i++){
         *buff = '.';
         buff++;
@@ -73,7 +74,7 @@ void usage(char *exename){
 }
 
 int count_words(char *buff, int len, int str_len){
-    //YOU MUST IMPLEMENT
+    //sanity checks
     if (str_len > len) {
         return -1;
     }
@@ -102,13 +103,15 @@ int count_words(char *buff, int len, int str_len){
 //ADD OTHER HELPER FUNCTIONS HERE FOR OTHER REQUIRED PROGRAM OPTIONS
 
 int reverse_buff(char *buff, int len, int str_len){
+    //sanity checks
     if (str_len > len) {
         return -1;
     }
     if (str_len == 0) {
         return 0;
     }
-    
+
+    //reverse the buffer by treating it as an array
     char temp;
     int i = str_len - 1;
     int j = 0;
@@ -120,10 +123,12 @@ int reverse_buff(char *buff, int len, int str_len){
         j++;
     }
 
+    //rc for success 
     return 1;
 }
 
 int print_words(char *buff, int len, int str_len){
+    //sanity checks
     if (str_len > len) {
         return -1;
     }
@@ -259,4 +264,6 @@ int main(int argc, char *argv[]){
 //          is a good practice, after all we know from main() that 
 //          the buff variable will have exactly 50 bytes?
 //  
-//          PLACE YOUR ANSWER HERE
+//          Although it wasn't used here, it allows manipulation of the buffer length 
+//          without affecting the buffer constant. It also allows for more robustness
+//          if for example, the BUFFER_SZ consant were to change.
