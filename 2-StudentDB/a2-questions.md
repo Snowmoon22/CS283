@@ -39,7 +39,7 @@ Please answer the following questions and submit in your repo for the second ass
     ```
     Can you think of any reason why the above implementation would be a **very bad idea** using the C programming language?  Specifically, address why the above code introduces a subtle bug that could be hard to identify at runtime? 
 
-    > **ANSWER:** The function is returning a pointer to a local variable. In other word, it is possible for tjhe mmemory to be reclaimed during runtime as it may be overwritten by future function / stack calls. This bug would be hard to identify because in some cases, the pointer to student may not be overwritten, making the bug intermittent.
+    > **ANSWER:** The function is returning a pointer to a local variable. In other word, it is possible for the memory to be reclaimed during runtime as it may be overwritten by future function / stack calls. The pointer returned by get_student is a dangling pointer that points to a memory location that is no longer valid after the function exits .This bug would be hard to identify because in some cases, the pointer to student may not be overwritten, making the bug intermittent.
 
 3. Another way the `get_student(...)` function could be implemented is as follows:
 
@@ -72,7 +72,7 @@ Please answer the following questions and submit in your repo for the second ass
     ```
     In this implementation the storage for the student record is allocated on the heap using `malloc()` and passed back to the caller when the function returns. What do you think about this alternative implementation of `get_student(...)`?  Address in your answer why it work work, but also think about any potential problems it could cause.  
     
-    > **ANSWER:** 
+    > **ANSWER:**  When we are allocating memory within a function and returning a pointer to it, the pointer will be in teh stack frame of the current function. However, when When the stack frame goes out of scope at function return, that pointer will cease to exist.
 
 
 4. Lets take a look at how storage is managed for our simple database. Recall that all student records are stored on disk using the layout of the `student_t` structure (which has a size of 64 bytes).  Lets start with a fresh database by deleting the `student.db` file using the command `rm ./student.db`.  Now that we have an empty database lets add a few students and see what is happening under the covers.  Consider the following sequence of commands:
@@ -102,11 +102,11 @@ Please answer the following questions and submit in your repo for the second ass
 
     - Please explain why the file size reported by the `ls` command was 128 bytes after adding student with ID=1, 256 after adding student with ID=3, and 4160 after adding the student with ID=64? 
 
-        > **ANSWER:** _start here_
+        > **ANSWER:** The program writes at offset 64 * 64 = 4096. The file size becomes 4096 + 64 = 4160 bytes.
 
     -   Why did the total storage used on the disk remain unchanged when we added the student with ID=1, ID=3, and ID=63, but increased from 4K to 8K when we added the student with ID=64? 
 
-        > **ANSWER:** _start here_
+        > **ANSWER:** Filesystems allocate disk space in blocks, usually 4KB in size. ID=1, ID=3, ID=63 fits within a single 4KB block. Writing at offset 4096 bytes causes the allocation of an additional block to accommodate the data, increasing the disk usage to 8.0K.
 
     - Now lets add one more student with a large student ID number  and see what happens:
 
@@ -119,4 +119,4 @@ Please answer the following questions and submit in your repo for the second ass
         ```
         We see from above adding a student with a very large student ID (ID=99999) increased the file size to 6400000 as shown by `ls` but the raw storage only increased to 12K as reported by `du`.  Can provide some insight into why this happened?
 
-        > **ANSWER:**  _start here_
+        > **ANSWER:**  The ls command displays the apparent file size, including any holes created by seeking beyond the current end of the file. In contrast, du reports the actual disk space utilized. While the file's apparent size increases with higher offsets due to sparse regions, the actual disk usage increases only when new blocks are allocated to store data.
