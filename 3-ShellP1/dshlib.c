@@ -37,7 +37,7 @@ int build_cmd_list(char *cmd_line, command_list_t *clist)
     clist->num = 0;
 
     // check for empty command line
-    if (cmd_line == NULL || strlen(cmd_line) == 0) {
+    if (strlen(cmd_line) == 0) {
         return WARN_NO_CMDS;
     }
 
@@ -64,13 +64,16 @@ int build_cmd_list(char *cmd_line, command_list_t *clist)
             return WARN_NO_CMDS;
         }
 
-        // Split the token into the executable and arguments
+        // Split executable and arguments - find end of exe
         char *exe_end = strchr(token, SPACE_CHAR);
         if (exe_end != NULL) {
+            // terminate end of exe - token now only contains exe
             *exe_end = '\0';  
+            // exe_end now points to start of arguments
             exe_end++;        
         }
-
+        
+        // check if input is within max size
         if (strlen(token) >= EXE_MAX) {
             return ERR_CMD_OR_ARGS_TOO_BIG;
         }
@@ -83,6 +86,7 @@ int build_cmd_list(char *cmd_line, command_list_t *clist)
         if (exe_end != NULL) {
             strncpy(clist->commands[clist->num].args, exe_end, ARG_MAX);
         } else {
+            // no arguments
             clist->commands[clist->num].args[0] = '\0'; 
         }
 
