@@ -34,6 +34,60 @@
  */
 int build_cmd_list(char *cmd_line, command_list_t *clist)
 {
-    printf(M_NOT_IMPL);
-    return EXIT_NOT_IMPL;
+    clist->num = 0;
+
+    // check for empty command line
+    if (cmd_line == NULL || strlen(cmd_line) == 0) {
+        return WARN_NO_CMDS;
+    }
+
+    // tokenize by pipe
+    char *token = strtok(cmd_line, PIPE_STRING);
+    while (token != NULL) {
+        if (clist->num >= CMD_MAX) {
+            return ERR_TOO_MANY_COMMANDS;
+        }
+
+        // Skip leading whitespaces
+        while (*token == SPACE_CHAR) {
+            token++;
+        }
+
+        // Remove trailing whitespaces
+        size_t len = strlen(token);
+        while (len > 0 && token[len - 1] == SPACE_CHAR) {
+            token[len - 1] = '\0';  
+            len--;
+        }
+
+        if (strlen(token) == 0) {
+            return WARN_NO_CMDS;
+        }
+
+        // Split the token into the executable and arguments
+        char *exe_end = strchr(token, SPACE_CHAR);
+        if (exe_end != NULL) {
+            *exe_end = '\0';  
+            exe_end++;        
+        }
+
+        if (strlen(token) >= EXE_MAX) {
+            return ERR_CMD_OR_ARGS_TOO_BIG;
+        }
+        if (exe_end != NULL && strlen(exe_end) >= ARG_MAX) {
+            return ERR_CMD_OR_ARGS_TOO_BIG;
+        }
+        
+        // Add to clist
+        strncpy(clist->commands[clist->num].exe, token, EXE_MAX);
+        if (exe_end != NULL) {
+            strncpy(clist->commands[clist->num].args, exe_end, ARG_MAX);
+        } else {
+            clist->commands[clist->num].args[0] = '\0'; 
+        }
+
+        clist->num++;
+        token = strtok(NULL, PIPE_STRING);
+    }
+    return OK;
 }
