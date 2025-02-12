@@ -16,9 +16,9 @@
 - One topic you should have found information on is "redirection". Please provide at least 3 redirection examples that we should implement in our custom shell, and explain what challenges we might have implementing them.
 
     > **Answer**: 
-     -`ls > output.txt` The shell must be able to handle if the file already exists and needs to be truncated, and ensure proper file descriptors.
-     -`sort < input.txt` One challenge would be having the shell read files. For example, the shell must be able to handle checking if the file exist or if the file has permission to be read.
-     -`echo "hi" >> file.txt` One challenge would be ensuring that the file is opened in append mode to avoid overwriting existing data.
+     - `ls > output.txt` The shell must be able to handle if the file already exists and needs to be truncated, and ensure proper file descriptors.
+     - `sort < input.txt` One challenge would be having the shell read files. For example, the shell must be able to handle checking if the file exist or if the file has permission to be read.
+     - `echo "hi" >> file.txt` One challenge would be ensuring that the file is opened in append mode to avoid overwriting existing data.
 
 - You should have also learned about "pipes". Redirection and piping both involve controlling input and output in the shell, but they serve different purposes. Explain the key differences between redirection and piping.
 
