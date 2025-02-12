@@ -4,12 +4,12 @@
 
 2. You needed to use `malloc()` to allocte memory for `cmd_buff` in `dsh_cli.c`. Can you explain why you needed to do that, instead of allocating a fixed-size array?
 
-    > **Answer**:  Fixed-size array does not allow you to manipulate characters by index.
+    > **Answer**:  Fixed-size array does not allow you to manipulate characters by index. Furthermore, by using dynamic allocation of memory, buffer can be resized.
 
 
 3. In `dshlib.c`, the function `build_cmd_list(`)` must trim leading and trailing spaces from each command before storing it. Why is this necessary? If we didn't trim spaces, what kind of issues might arise when executing commands in our shell?
 
-    > **Answer**:  Not removing leading and trailing spaces can mess with
+    > **Answer**:  Not removing leading and trailing spaces can mess with how commands are printed. Further more, whitespaces will need to be removed eventually in order to execute command based on the tokens that are parsed.
 
 4. For this question you need to do some research on STDIN, STDOUT, and STDERR in Linux. We've learned this week that shells are "robust brokers of input and output". Google _"linux shell stdin stdout stderr explained"_ to get started.
 
