@@ -25,26 +25,14 @@ int alloc_cmd_buff(cmd_buff_t *cmd_buff) {
 }
 
 int free_cmd_buff(cmd_buff_t *cmd_buff) {
-	if (cmd_buff->_cmd_buffer) {
-		free(cmd_buff->_cmd_buffer);
-		cmd_buff->_cmd_buffer = NULL;
+    free(cmd_buff->_cmd_buffer);
+	for (int i = 0; i < CMD_ARGV_MAX; i++) {
+        if(cmd_buff->argv[i]) free(cmd_buff->argv[i]);
 	}
-
-	for (int i = 0; i < cmd_buff->argc; i++) {
-		if (cmd_buff->argv[i]) {
-			free(cmd_buff->argv[i]);
-			cmd_buff->argv[i] = NULL;
-		}
-	}
-
-	cmd_buff->argc = 0;
 	return OK;
 }
 
 int clear_cmd_buff(cmd_buff_t *cmd_buff) {
-    if(cmd_buff == NULL) {
-        return ERR_CMD_ARGS_BAD;
-    }
 
     for (int i = 0; i < CMD_ARGV_MAX; i++) {
         if(cmd_buff->argv[i]) {
@@ -54,6 +42,7 @@ int clear_cmd_buff(cmd_buff_t *cmd_buff) {
     }
 
     cmd_buff->argc = 0;
+    
     return OK;
 }
 
@@ -169,11 +158,9 @@ Built_In_Cmds exec_built_in_cmd(cmd_buff_t *cmd) {
                 break; // do nothing
             }
             if(cmd->argc > 2) {
-                printf("cd: too many argument\n");
                 return ERR_EXEC_CMD;;
             }
             if(chdir(cmd->argv[1])) {
-                printf("cd: failed to change directory to %s\n", cmd->argv[1]);
                 return ERR_EXEC_CMD;;
             }
             return BI_EXECUTED;
