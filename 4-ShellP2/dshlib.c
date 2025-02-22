@@ -27,7 +27,10 @@ int alloc_cmd_buff(cmd_buff_t *cmd_buff) {
 int free_cmd_buff(cmd_buff_t *cmd_buff) {
     free(cmd_buff->_cmd_buffer);
 	for (int i = 0; i < CMD_ARGV_MAX; i++) {
-        if(cmd_buff->argv[i]) free(cmd_buff->argv[i]);
+        if(cmd_buff->argv[i]) {
+            free(cmd_buff->argv[i]);
+            cmd_buff->argv[i] = NULL;
+        }
 	}
 	return OK;
 }
@@ -149,6 +152,7 @@ Built_In_Cmds exec_built_in_cmd(cmd_buff_t *cmd) {
 
     switch (cmd_type) {
         case BI_CMD_EXIT:
+            free_cmd_buff(cmd);
             exit(0);
         case BI_CMD_DRAGON:
             print_dragon();
@@ -250,7 +254,7 @@ int exec_cmd(cmd_buff_t *cmd) {
  */
 int exec_local_cmd_loop()
 {
-    char *cmd_buff = malloc(sizeof(char) * SH_CMD_MAX);;
+    char *cmd_buff;
     int rc = 0;
     cmd_buff_t cmd;
 
@@ -260,6 +264,7 @@ int exec_local_cmd_loop()
 
     while (1)
     {
+        cmd_buff = malloc(sizeof(char) * SH_CMD_MAX);
         printf("%s", SH_PROMPT);
 
         if (fgets(cmd_buff, ARG_MAX, stdin) == NULL)
@@ -272,6 +277,8 @@ int exec_local_cmd_loop()
         cmd_buff[strcspn(cmd_buff, "\n")] = '\0';
 
         rc = build_cmd_buff(cmd_buff, &cmd);
+        free(cmd_buff);
+
         switch (rc) {
             case OK:
                 Built_In_Cmds cmdType = match_command(cmd.argv[0]); 
@@ -293,13 +300,7 @@ int exec_local_cmd_loop()
         }
     }
 
-    // TODO IMPLEMENT if built-in command, execute builtin logic for exit, cd (extra credit: dragon)
-    // the cd command should chdir to the provided directory; if no directory is provided, do nothing
 
-    // TODO IMPLEMENT if not built-in command, fork/exec as an external command
-    // for example, if the user input is "ls -l", you would fork/exec the command "ls" with the arg "-l"
-
-    free(cmd_buff);
     free_cmd_buff(&cmd);
     return OK;
 }
