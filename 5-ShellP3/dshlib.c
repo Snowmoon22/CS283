@@ -64,13 +64,17 @@ int free_cmd_list(command_list_t *cmd_list) {
 }
 
 
-// Helper functions for build_cmd_buff
+// Helper functions 
 int is_space(char c) {
     return isspace((unsigned char)c);
 }
 
 int is_quote(char c) {
     return c == '"' || c == '\'';
+}
+
+int is_pipe(char c) {
+    return c == PIPE_CHAR;
 }
 
 void trim_whitespace(char *str) {
@@ -124,11 +128,19 @@ int build_cmd_buff(char *cmd_line, cmd_buff_t *cmd_buff)
             end++;
         }
 
+        int len = end - start;
+
+        // Check if the token is too big
+        if (argc == 0 && len > EXE_MAX) {
+            return ERR_CMD_OR_ARGS_TOO_BIG;
+        } else if (len > ARG_MAX) {
+            return ERR_CMD_OR_ARGS_TOO_BIG;
+        }
+
         if (argc >= CMD_MAX) {
             return ERR_TOO_MANY_COMMANDS;
         }
-
-        int len = end - start;
+        
         cmd_buff->argv[argc] = malloc(sizeof(char) * len - 1);
         if (!cmd_buff->argv[argc]) {
             return ERR_MEMORY;
@@ -147,28 +159,11 @@ int build_cmd_buff(char *cmd_line, cmd_buff_t *cmd_buff)
     return OK;
 }
 
-// Helper functions
-char *trim_spaces(char *str) {
-    while (isspace((unsigned char)*str)) str++;
-
-    if (*str == 0) return str;
-
-    char *end = str + strlen(str) - 1;
-    while (end > str && isspace((unsigned char)*end)) end--;
-
-    end[1] = '\0';
-    return str;
-}
-
-int is_pipe(char c) {
-    return c == PIPE_CHAR;
-}
-
 int build_cmd_list(char *cmd_line, command_list_t *clist) {
     if (!cmd_line || !clist) return ERR_CMD_ARGS_BAD;
 
     // Trim leading and trailing spaces
-    cmd_line = trim_spaces(cmd_line);
+    trim_whitespace(cmd_line);
     if (*cmd_line == 0) return WARN_NO_CMDS;
 
     // Initialize the command list
@@ -176,8 +171,6 @@ int build_cmd_list(char *cmd_line, command_list_t *clist) {
 
     char *start = cmd_line;
     char *end = cmd_line;
-    int in_quotes = 0;
-    char quote_char = 0;
 
     while (*start) {
         // Skip leading spaces
@@ -185,21 +178,8 @@ int build_cmd_list(char *cmd_line, command_list_t *clist) {
 
         if (*start == 0) break;
 
-        // Handle quoted strings
-        if (is_quote(*start)) {
-            in_quotes = 1;
-            quote_char = *start;
-            start++;
-        }
-
         end = start;
-        while (*end && (in_quotes || !is_pipe(*end))) {
-            if (is_quote(*end) && *end == quote_char) {
-                in_quotes = 0;
-                quote_char = 0;
-                end++;
-                break;
-            }
+        while (*end && !is_pipe(*end)) {
             end++;
         }
 
@@ -217,8 +197,9 @@ int build_cmd_list(char *cmd_line, command_list_t *clist) {
         clist->commands[clist->num]._cmd_buffer[len] = '\0';
 
         // Build the command buffer (parse arguments)
-        if (build_cmd_buff(clist->commands[clist->num]._cmd_buffer, &clist->commands[clist->num]) != OK) {
-            return ERR_CMD_ARGS_BAD;
+        int cmd_buff_rc = build_cmd_buff(clist->commands[clist->num]._cmd_buffer, &clist->commands[clist->num]);
+        if (cmd_buff_rc != OK) {
+            return cmd_buff_rc;
         }
 
         clist->num++;
@@ -249,6 +230,7 @@ Built_In_Cmds exec_built_in_cmd(cmd_buff_t *cmd) {
 
     switch (cmd_type) {
         case BI_CMD_EXIT:
+            printf("Exiting...\n");
             free_cmd_buff(cmd);
             exit(0);
         case BI_CMD_DRAGON:
@@ -324,6 +306,16 @@ int execute_pipeline(command_list_t *clist) {
 
     // Create processes for each command
     for (int i = 0; i < num_commands; i++) {
+        cmd_buff_t *cmd = &clist->commands[i];
+
+        // Check if the command is a built-in command
+        Built_In_Cmds cmd_type = match_command(cmd->argv[0]);
+
+        if (cmd_type != BI_NOT_BI) {
+            exec_built_in_cmd(cmd);
+            continue; // Skip forking for built-in commands
+        }
+
         pids[i] = fork();
         if (pids[i] == -1) {
             perror("fork");
@@ -348,7 +340,7 @@ int execute_pipeline(command_list_t *clist) {
             }
 
             // Execute command
-            execvp(clist->commands[i].argv[0], clist->commands[i].argv);
+            execvp(cmd->argv[0], cmd->argv);
             perror("execvp");
             exit(ERR_EXEC_CMD);
         }
@@ -421,7 +413,7 @@ int exec_local_cmd_loop()
         cmd_buff = malloc(sizeof(char) * SH_CMD_MAX);
         printf("%s", SH_PROMPT);
 
-        if (fgets(cmd_buff, ARG_MAX, stdin) == NULL)
+        if (fgets(cmd_buff, SH_CMD_MAX, stdin) == NULL)
         {
             printf("\n");
             break;
@@ -450,8 +442,11 @@ int exec_local_cmd_loop()
             case WARN_NO_CMDS:
                 printf(CMD_WARN_NO_CMD);
                 break;
+            case ERR_CMD_OR_ARGS_TOO_BIG:
+                printf("error: max buffer size for shell is %d\n", SH_CMD_MAX);
+                break;
             case ERR_TOO_MANY_COMMANDS:
-                printf("error: too many arguments\n");
+                printf(CMD_ERR_PIPE_LIMIT, CMD_MAX);
                 break;
             default:
                 printf("error: parsing command: %d\n", rc);
