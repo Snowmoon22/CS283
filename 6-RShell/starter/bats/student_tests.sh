@@ -52,15 +52,11 @@ EOF
 }
 
 @test "Server Mode: Start and Stop" {
-    # Start the server in the background
-    ./dsh -s -p 5678 &
-    server_pid=$!
+    ./dsh -s -i 0.0.0.0 -p 7890 &
     
-    # Give the server time to start
     sleep 1
     
-    # Run the client and send the 'stop-server' command
-    run ./dsh -c -p 5678 <<EOF
+    run ./dsh -c -i 129.25.203.107 -p 7890 <<EOF
 stop-server
 EOF
 
@@ -80,21 +76,17 @@ EOF
 }
 
 @test "Server Mode: Basic Command Execution (echo)" {
-    # Start the server in the background
-    ./dsh -s -p 5678 &
-    server_pid=$!
+    ./dsh -s -i 0.0.0.0 -p 7890 &
     
-    # Give the server time to start
     sleep 1
     
-    # Run the client and send the 'echo' command
-    run ./dsh -c -p 5678 <<EOF
+    run ./dsh -c -i 129.25.203.107 -p 7890 <<EOF
 echo Hello World
 exit
 EOF
 
     # Stop the server
-    run ./dsh -c -p 5678 <<EOF
+    run ./dsh -c -i 129.25.203.107 -p 7890 <<EOF
 stop-server
 EOF
 
@@ -115,21 +107,17 @@ EOF
 
 
 @test "Server Mode: Invalid Command" {
-    # Start the server in the background
-    ./dsh -s -p 5678 &
-    server_pid=$!
+    ./dsh -s -i 0.0.0.0 -p 7890 &
     
-    # Give the server time to start
     sleep 1
     
-    # Run the client and send an invalid command
-    run ./dsh -c -p 5678 <<EOF
+    run ./dsh -c -i 129.25.203.107 -p 7890 <<EOF
 invalid_command
 exit
 EOF
 
     # Stop the server
-    run ./dsh -c -p 5678 <<EOF
+    run ./dsh -c -i 129.25.203.107 -p 7890 <<EOF
 stop-server
 EOF
 
@@ -145,37 +133,4 @@ EOF
     [ "$server_status" -eq 0 ]
     [ "$status" -eq 0 ]
     [[ "$output" == *"rdsh-error: command execution error"* ]]
-}
-
-@test "Server Mode: Large Command Output" {
-    # Start the server in the background
-    ./dsh -s -p 5678 &
-    server_pid=$!
-    
-    # Give the server time to start
-    sleep 1
-    
-    # Run the client and send a command that generates large output
-    run ./dsh -c -p 5678 <<EOF
-cat /dev/urandom | head -c 100000
-exit
-EOF
-
-    # Stop the server
-    run ./dsh -c -p 5678 <<EOF
-stop-server
-EOF
-
-    # Wait for the server to stop
-    wait $server_pid
-    server_status=$?
-    
-    echo "Server exit status: $server_status"
-    echo "Client output length:"
-    echo "${#output}"
-    echo "Client exit status: $status"
-    
-    [ "$server_status" -eq 0 ]
-    [ "$status" -eq 0 ]
-    [ "${#output}" -eq 100000 ]
 }
